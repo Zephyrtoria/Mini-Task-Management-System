@@ -40,7 +40,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         }
         // 4.2 存在，保存用户id 到 ThreadLocal
         long userId = Long.parseLong(s);
-        UserHolder.saveUser(userId);
+        UserHolder.saveUserId(userId);
 
         // 5. 刷新token有效期
         stringRedisTemplate.expire(tokenKey, LOGIN_USER_REDIS_TTL, TimeUnit.MINUTES);

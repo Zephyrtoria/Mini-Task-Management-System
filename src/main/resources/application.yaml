@@ -27,3 +27,9 @@ mybatis-plus:
 logging:
   level:
     com.github.zephyrtoria.task_system.domain: debug
+
+knife4j:
+  # 开启增强配置
+  enable: true
+  # 开启生产环境屏蔽
+  production: false

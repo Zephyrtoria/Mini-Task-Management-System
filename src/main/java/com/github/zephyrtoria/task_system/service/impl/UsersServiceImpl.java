@@ -7,6 +7,8 @@ import com.github.zephyrtoria.task_system.domain.Users;
 import com.github.zephyrtoria.task_system.domain.dto.UserSigninDTO;
 import com.github.zephyrtoria.task_system.domain.dto.UserSignupDTO;
 import com.github.zephyrtoria.task_system.domain.result.Result;
+import com.github.zephyrtoria.task_system.domain.vo.UserMeVO;
+import com.github.zephyrtoria.task_system.domain.vo.UserQueryVO;
 import com.github.zephyrtoria.task_system.service.UsersService;
 import com.github.zephyrtoria.task_system.mapper.UsersMapper;
 import com.github.zephyrtoria.task_system.utils.PasswordEncoder;
@@ -38,7 +40,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
     public Result signup(UserSignupDTO userSignupDTO) {
         Users users = query().eq("name", userSignupDTO.getName()).one();
         if (users != null) {
-            return Result.fail("当前用户名已被占用");
+            return Result.fail(400,"当前用户名已被占用");
         }
 
         users = new Users();
@@ -52,10 +54,10 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
     public Result signin(UserSigninDTO userSigninDTO) {
         Users users = query().eq("name", userSigninDTO.getName()).one();
         if (users == null) {
-            return Result.fail("用户不存在");
+            return Result.fail(400,"用户不存在");
         }
         if (!PasswordEncoder.matches(users.getPassword(), userSigninDTO.getPassword())) {
-            return Result.fail("密码错误");
+            return Result.fail(400,"密码错误");
         }
 
         // 登录成功
@@ -66,21 +68,25 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
     @Override
     public Result me() {
-        Long userId = UserHolder.getUser();
+        Long userId = UserHolder.getUserId();
         Users users = query().eq("id", userId).one();
         if (users == null) {
-            return Result.fail("用户不存在");
+            return Result.fail(400,"用户不存在");
         }
-        return Result.ok(users);
+        UserMeVO userMeVO = new UserMeVO();
+        BeanUtil.copyProperties(users, userMeVO);
+        return Result.ok(userMeVO);
     }
 
     @Override
     public Result queryById(Long id) {
         Users users = query().eq("id", id).one();
         if (users == null) {
-            return Result.fail("用户不存在");
+            return Result.fail(400,"用户不存在");
         }
-        return Result.ok(users);
+        UserQueryVO userQueryVO = new UserQueryVO();
+        BeanUtil.copyProperties(users, userQueryVO);
+        return Result.ok(userQueryVO);
     }
 }
 
