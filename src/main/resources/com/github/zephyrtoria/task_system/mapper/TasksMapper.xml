@@ -5,17 +5,39 @@
 <mapper namespace="com.github.zephyrtoria.task_system.mapper.TasksMapper">
 
     <resultMap id="BaseResultMap" type="com.github.zephyrtoria.task_system.domain.Tasks">
-            <id property="id" column="id" />
-            <result property="projectId" column="project_id" />
-            <result property="title" column="title" />
-            <result property="content" column="content" />
-            <result property="status" column="status" />
-            <result property="priority" column="priority" />
-            <result property="createdTime" column="created_time" />
+        <id property="id" column="id"/>
+        <result property="projectId" column="project_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="status" column="status"/>
+        <result property="priority" column="priority"/>
+        <result property="createdTime" column="created_time"/>
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id,project_id,title,content,status,priority,
-        created_time
-    </sql>
+    <select id="queryAll" resultType="com.github.zephyrtoria.task_system.domain.Tasks">
+        select * from tasks
+        <where>
+            project_id = ${projectId}
+            <if test="status != null">
+                and status = ${status}
+            </if>
+            <if test="priority != null">
+                and priority = ${priority}
+            </if>
+        </where>
+        <choose>
+            <when test="type == 0">
+                order by priority desc
+            </when>
+            <when test="type == 1">
+                order by priority
+            </when>
+            <when test="type == 2">
+                order by created_time
+            </when>
+            <when test="type == 3">
+                order by created_time desc
+            </when>
+        </choose>
+    </select>
 </mapper>

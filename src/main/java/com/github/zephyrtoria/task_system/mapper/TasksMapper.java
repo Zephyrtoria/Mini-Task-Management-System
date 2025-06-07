@@ -2,6 +2,9 @@ package com.github.zephyrtoria.task_system.mapper;
 
 import com.github.zephyrtoria.task_system.domain.Tasks;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.github.zephyrtoria.task_system.domain.dto.TasksQueryDTO;
+
+import java.util.List;
 
 /**
 * @author 23240
@@ -11,6 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface TasksMapper extends BaseMapper<Tasks> {
 
+    List<Tasks> queryAll(TasksQueryDTO tasksQueryDTO);
 }
 
 

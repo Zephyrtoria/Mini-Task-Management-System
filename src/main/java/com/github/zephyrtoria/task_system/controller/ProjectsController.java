@@ -1,9 +1,8 @@
 package com.github.zephyrtoria.task_system.controller;
 
-import com.github.zephyrtoria.task_system.domain.dto.ProjectInsertDTO;
+import com.github.zephyrtoria.task_system.domain.dto.ProjectCreateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUpdateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUserLinkDTO;
-import com.github.zephyrtoria.task_system.domain.dto.UserSignupDTO;
 import com.github.zephyrtoria.task_system.domain.result.Result;
 import com.github.zephyrtoria.task_system.service.ProjectsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,8 +21,8 @@ public class ProjectsController {
 
     @PostMapping("")
     @Operation(description = "新建项目")
-    public Result insert(@RequestBody ProjectInsertDTO projectInsertDTO) {
-        return projectsService.insert(projectInsertDTO);
+    public Result insert(@RequestBody ProjectCreateDTO projectCreateDTO) {
+        return projectsService.insert(projectCreateDTO);
     }
 
     @PutMapping("")

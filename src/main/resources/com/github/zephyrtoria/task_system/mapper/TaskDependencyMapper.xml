@@ -9,7 +9,11 @@
             <result property="nextId" column="next_id" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        prev_id,next_id
-    </sql>
+    <insert id="insertBatch">
+        insert into task_dependency (prev_id, next_id)
+        values
+        <foreach collection="list" item="td" separator=",">
+            (${td.prevId}, ${td.nextId})
+        </foreach>
+    </insert>
 </mapper>

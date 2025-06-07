@@ -10,7 +10,4 @@
             <result property="level" column="level" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        user_id,project_id,level
-    </sql>
 </mapper>

@@ -2,6 +2,8 @@ package com.github.zephyrtoria.task_system.service;
 
 import com.github.zephyrtoria.task_system.domain.Tasks;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.github.zephyrtoria.task_system.domain.dto.*;
+import com.github.zephyrtoria.task_system.domain.result.Result;
 
 /**
 * @author 23240
@@ -10,4 +12,15 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface TasksService extends IService<Tasks> {
 
+    Result create(TasksCreateDTO tasksCreateDTO);
+
+    Result delete(TasksDeleteDTO tasksDeleteDTO);
+
+    Result modify(TasksUpdateDTO tasksUpdateDTO);
+
+    Result status(TasksSetStatusDTO tasksSetStatusDTO);
+
+    Result queryById(Long id);
+
+    Result queryAll(TasksQueryDTO tasksQueryDTO);
 }

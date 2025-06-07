@@ -3,11 +3,10 @@ package com.github.zephyrtoria.task_system.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.zephyrtoria.task_system.consts.ProjectsConsts;
 import com.github.zephyrtoria.task_system.domain.Projects;
 import com.github.zephyrtoria.task_system.domain.UserProject;
 import com.github.zephyrtoria.task_system.domain.Users;
-import com.github.zephyrtoria.task_system.domain.dto.ProjectInsertDTO;
+import com.github.zephyrtoria.task_system.domain.dto.ProjectCreateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUpdateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUserLinkDTO;
 import com.github.zephyrtoria.task_system.domain.result.Result;
@@ -19,7 +18,6 @@ import com.github.zephyrtoria.task_system.mapper.UsersMapper;
 import com.github.zephyrtoria.task_system.service.ProjectsService;
 import com.github.zephyrtoria.task_system.utils.UserHolder;
 import jakarta.annotation.Resource;
-import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,11 +42,17 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
     @Resource
     private UsersMapper usersMapper;
 
+    /**
+     * 创建新projects
+     *
+     * @param projectCreateDTO
+     * @return
+     */
     @Override
     @Transactional
-    public Result insert(ProjectInsertDTO projectInsertDTO) {
+    public Result insert(ProjectCreateDTO projectCreateDTO) {
         Projects projects = new Projects();
-        BeanUtil.copyProperties(projectInsertDTO, projects);
+        BeanUtil.copyProperties(projectCreateDTO, projects);
 
         save(projects);
 
@@ -63,17 +67,39 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         return Result.ok(projects);
     }
 
+    /**
+     * 修改projects信息
+     *
+     * @param projectUpdateDTO
+     * @return
+     */
     @Override
+    @Transactional
     public Result modify(ProjectUpdateDTO projectUpdateDTO) {
+        if (!checkAdmin(projectUpdateDTO.getId())) {
+            // 是否在该表中，且是否是管理员
+            return Result.fail(400, "无权限修改项目");
+        }
         Projects projects = new Projects();
         BeanUtil.copyProperties(projectUpdateDTO, projects);
         saveOrUpdate(projects);
         return Result.ok(projects);
     }
 
+    /**
+     * 删除项目，需要由管理员权限
+     *
+     * @param id
+     * @return
+     */
     @Override
     @Transactional
     public Result delete(Long id) {
+        if (!checkAdmin(id)) {
+            // 是否在该表中，且是否是管理员
+            return Result.fail(400, "无权限删除项目");
+        }
+
         // 删除关联
         QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
         wrapper.eq(PROJECT_ID, id);
@@ -87,6 +113,11 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         return Result.ok();
     }
 
+    /**
+     * 查询当前users所有的projects
+     *
+     * @return
+     */
     @Override
     @Transactional
     public Result queryAll() {
@@ -106,23 +137,38 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         return Result.ok(projectsQueryVOList);
     }
 
+    /**
+     * 根据project_id查询projects
+     *
+     * @param id project_id
+     * @return VO对象
+     */
     @Override
     public Result queryById(Long id) {
         Projects projects = query().eq(ID, id).one();
         ProjectsQueryVO projectsQueryVO = new ProjectsQueryVO();
         BeanUtil.copyProperties(projects, projectsQueryVO);
+
         return Result.ok(projectsQueryVO);
     }
 
+    /**
+     * 根据project_id查询projects对应的users
+     *
+     * @param id project_id
+     * @return users集合
+     */
     @Override
     @Transactional
     public Result queryUsers(Long id) {
+        // 从关系表中查询project_id对应的所有user
         QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
         wrapper.eq(PROJECT_ID, id);
         List<UserProject> list = userProjectMapper.selectList(wrapper);
         List<Long> ids = new ArrayList<>();
         list.forEach(each -> ids.add(each.getUserId()));
 
+        // 再从users表中查询详细数据，封装成VO类返回
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
         queryWrapper.in(ID, ids);
         List<Users> users = usersMapper.selectList(queryWrapper);
@@ -135,34 +181,56 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         return Result.ok(userQueryVOList);
     }
 
+    /**
+     * 创建users和projects之间的关联，或修改权限
+     *
+     * @param projectUserLinkDTO
+     * @return
+     */
     @Override
     @Transactional
     public Result linkUser(ProjectUserLinkDTO projectUserLinkDTO) {
         // 检查权限，不能操作自身不在的项目
-        QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
         Long userId = UserHolder.getUserId();
-        wrapper.eq(USER_ID, userId).eq(PROJECT_ID, projectUserLinkDTO.getProjectId());
-        UserProject link = userProjectMapper.selectOne(wrapper);
-        if (link == null || link.getLevel() != ADMIN) {
+        if (!checkAdmin(projectUserLinkDTO.getProjectId())) {
+            // 是否在该表中，且是否是管理员
             return Result.fail(400, "无权限添加组员");
         } else if (userId.equals(projectUserLinkDTO.getUserId())) {
+            // 不能操作自己的权限
             return Result.fail(400, "不能操作自身权限");
         }
 
         // 添加关联
         UserProject userProject = new UserProject();
         BeanUtil.copyProperties(projectUserLinkDTO, userProject);
-        wrapper = new QueryWrapper<>();
+        // 先查询是否已经存在关联，此处将插入和更新结合到一起了
+        QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
         wrapper.eq(USER_ID, projectUserLinkDTO.getUserId()).eq(PROJECT_ID, projectUserLinkDTO.getProjectId());
 
         if (userProjectMapper.selectCount(wrapper) > 0) {
             // 已经存在关联，则修改level
             userProjectMapper.update(userProject, wrapper);
-            return Result.ok();
+        } else {
+            // 不存在关联，加入关联
+            userProjectMapper.insert(userProject);
         }
-        // 不存在关联，加入关联
-        userProjectMapper.insert(userProject);
-        return Result.ok();
+        return Result.ok(userProject);
+    }
+
+    /**
+     * 检查权限
+     *
+     * @param projectId
+     * @return
+     */
+    private boolean checkAdmin(Long projectId) {
+        Long userId = UserHolder.getUserId();
+
+        QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
+        wrapper.eq(USER_ID, userId).eq(PROJECT_ID, projectId);
+        UserProject link = userProjectMapper.selectOne(wrapper);
+        // 是否在该表中，且是否是管理员
+        return link != null && link.getLevel() == ADMIN;
     }
 }
 

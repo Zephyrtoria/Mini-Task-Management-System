@@ -9,7 +9,4 @@
             <result property="name" column="name" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id,name
-    </sql>
 </mapper>

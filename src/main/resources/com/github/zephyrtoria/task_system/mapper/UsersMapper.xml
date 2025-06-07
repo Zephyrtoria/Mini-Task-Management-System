@@ -10,7 +10,4 @@
             <result property="password" column="password" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id,name,password
-    </sql>
 </mapper>

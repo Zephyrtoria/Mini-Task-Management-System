@@ -2,7 +2,7 @@ package com.github.zephyrtoria.task_system.service;
 
 import com.github.zephyrtoria.task_system.domain.Projects;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.github.zephyrtoria.task_system.domain.dto.ProjectInsertDTO;
+import com.github.zephyrtoria.task_system.domain.dto.ProjectCreateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUpdateDTO;
 import com.github.zephyrtoria.task_system.domain.dto.ProjectUserLinkDTO;
 import com.github.zephyrtoria.task_system.domain.result.Result;
@@ -14,7 +14,7 @@ import com.github.zephyrtoria.task_system.domain.result.Result;
 */
 public interface ProjectsService extends IService<Projects> {
 
-    Result insert(ProjectInsertDTO projectInsertDTO);
+    Result insert(ProjectCreateDTO projectCreateDTO);
 
     Result modify(ProjectUpdateDTO projectUpdateDTO);
 
