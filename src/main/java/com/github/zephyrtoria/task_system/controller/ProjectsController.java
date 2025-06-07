@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/user")
+@RequestMapping("api/projects")
 @Slf4j
-@Tag(name = "用户接口")
-public class ProjectController {
+@Tag(name = "项目接口")
+public class ProjectsController {
 }

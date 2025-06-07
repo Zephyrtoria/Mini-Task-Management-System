@@ -1,7 +1,7 @@
 package com.github.zephyrtoria.task_system.config;
 
 
-import com.github.zephyrtoria.hmdp.entity.result.Result;
+import com.github.zephyrtoria.task_system.domain.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
