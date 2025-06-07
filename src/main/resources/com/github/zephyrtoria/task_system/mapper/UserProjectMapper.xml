@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.zephyrtoria.task_system.mapper.UserProjectMapper">
+
+    <resultMap id="BaseResultMap" type="com.github.zephyrtoria.task_system.domain.UserProject">
+            <id property="userId" column="user_id" />
+            <id property="projectId" column="project_id" />
+            <result property="level" column="level" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        user_id,project_id,level
+    </sql>
+</mapper>
