@@ -18,24 +18,24 @@
         select * from tasks
         <where>
             project_id = ${projectId}
-            <if test="status != null">
+            <if test="status != null and status != 0">
                 and status = ${status}
             </if>
-            <if test="priority != null">
+            <if test="priority != null and priority != 0">
                 and priority = ${priority}
             </if>
         </where>
         <choose>
-            <when test="type == 0">
+            <when test="type == 1">
                 order by priority desc
             </when>
-            <when test="type == 1">
+            <when test="type == 2">
                 order by priority
             </when>
-            <when test="type == 2">
+            <when test="type == 3">
                 order by created_time
             </when>
-            <when test="type == 3">
+            <when test="type == 4">
                 order by created_time desc
             </when>
         </choose>

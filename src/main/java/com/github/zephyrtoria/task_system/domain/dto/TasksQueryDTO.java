@@ -6,9 +6,9 @@ import lombok.Data;
 public class TasksQueryDTO {
     private Long projectId;
 
-    private Integer type;
+    private Integer type = 0;
 
-    private Integer status;
+    private Integer status = 0;
 
-    private Integer priority;
+    private Integer priority = 0;
 }
