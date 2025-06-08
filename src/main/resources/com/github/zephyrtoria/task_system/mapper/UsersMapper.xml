@@ -9,5 +9,11 @@
             <result property="name" column="name" />
             <result property="password" column="password" />
     </resultMap>
+    <select id="queryAllByProjectId" resultType="com.github.zephyrtoria.task_system.domain.Users">
+        select u.*
+        from users u
+                 left join user_project up on u.id = up.user_id
+        where up.project_id = #{projectId}
+    </select>
 
 </mapper>

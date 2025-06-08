@@ -3,6 +3,8 @@ package com.github.zephyrtoria.task_system.mapper;
 import com.github.zephyrtoria.task_system.domain.Users;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import java.util.List;
+
 /**
 * @author 23240
 * @description 针对表【users】的数据库操作Mapper
@@ -11,6 +13,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface UsersMapper extends BaseMapper<Users> {
 
+    List<Users> queryAllByProjectId(Long projectId);
 }
 
 

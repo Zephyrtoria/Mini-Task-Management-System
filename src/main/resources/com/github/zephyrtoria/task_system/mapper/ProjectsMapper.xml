@@ -8,5 +8,11 @@
             <id property="id" column="id" />
             <result property="name" column="name" />
     </resultMap>
+    <select id="queryAllByUserId" resultType="com.github.zephyrtoria.task_system.domain.Projects">
+        select p.*
+        from projects p
+                 left join user_project up on p.id = up.project_id
+        where up.user_id = #{userId}
+    </select>
 
 </mapper>

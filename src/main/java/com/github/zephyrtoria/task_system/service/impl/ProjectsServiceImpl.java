@@ -51,17 +51,18 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
     @Override
     @Transactional
     public Result insert(ProjectCreateDTO projectCreateDTO) {
+        // 存储项目
         Projects projects = new Projects();
         BeanUtil.copyProperties(projectCreateDTO, projects);
 
         save(projects);
 
+        // 添加用户项目关系
         Long userId = UserHolder.getUserId();
         UserProject link = new UserProject();
         link.setProjectId(projects.getId());
         link.setUserId(userId);
         link.setLevel(ADMIN);
-
         userProjectMapper.insert(link);
 
         return Result.ok(projects);
@@ -74,12 +75,13 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
      * @return
      */
     @Override
-    @Transactional
     public Result modify(ProjectUpdateDTO projectUpdateDTO) {
+        // 是否在该表中，且是否是管理员
         if (!checkAdmin(projectUpdateDTO.getId())) {
-            // 是否在该表中，且是否是管理员
-            return Result.fail(400, "无权限修改项目");
+            return Result.NO_AUTH;
         }
+
+        // 保存修改
         Projects projects = new Projects();
         BeanUtil.copyProperties(projectUpdateDTO, projects);
         saveOrUpdate(projects);
@@ -95,9 +97,9 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
     @Override
     @Transactional
     public Result delete(Long id) {
+        // 是否在该表中，且是否是管理员
         if (!checkAdmin(id)) {
-            // 是否在该表中，且是否是管理员
-            return Result.fail(400, "无权限删除项目");
+            return Result.NO_AUTH;
         }
 
         // 删除关联
@@ -119,21 +121,25 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
      * @return
      */
     @Override
-    @Transactional
     public Result queryAll() {
+        // 根据当前登录用户id获取
         Long userId = UserHolder.getUserId();
-        QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
-        wrapper.eq(USER_ID, userId);
-        List<UserProject> list = userProjectMapper.selectList(wrapper);
-        List<Long> ids = new ArrayList<>();
-        list.forEach(each -> ids.add(each.getProjectId()));
+//        QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
+//        wrapper.eq(USER_ID, userId);
+//        List<UserProject> list = userProjectMapper.selectList(wrapper);
+//        List<Long> ids = new ArrayList<>();
+//        list.forEach(each -> ids.add(each.getProjectId()));
+
+        // 优化为一次多表查询
+        List<Projects> projectsList = baseMapper.queryAllByUserId(userId);
 
         List<ProjectsQueryVO> projectsQueryVOList = new ArrayList<>();
-        listByIds(ids).forEach(each -> {
+        projectsList.forEach(each -> {
             ProjectsQueryVO projectsQueryVO = new ProjectsQueryVO();
             BeanUtil.copyProperties(each, projectsQueryVO);
             projectsQueryVOList.add(projectsQueryVO);
         });
+
         return Result.ok(projectsQueryVOList);
     }
 
@@ -159,9 +165,8 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
      * @return users集合
      */
     @Override
-    @Transactional
     public Result queryUsers(Long id) {
-        // 从关系表中查询project_id对应的所有user
+/*        // 从关系表中查询project_id对应的所有user
         QueryWrapper<UserProject> wrapper = new QueryWrapper<>();
         wrapper.eq(PROJECT_ID, id);
         List<UserProject> list = userProjectMapper.selectList(wrapper);
@@ -171,9 +176,13 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         // 再从users表中查询详细数据，封装成VO类返回
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
         queryWrapper.in(ID, ids);
-        List<Users> users = usersMapper.selectList(queryWrapper);
+        List<Users> users = usersMapper.selectList(queryWrapper);*/
+
+        // 优化为一次多表查询
+        List<Users> usersList = usersMapper.queryAllByProjectId(id);
+
         List<UserQueryVO> userQueryVOList = new ArrayList<>();
-        users.forEach(each -> {
+        usersList.forEach(each -> {
             UserQueryVO userQueryVO = new UserQueryVO();
             BeanUtil.copyProperties(each, userQueryVO);
             userQueryVOList.add(userQueryVO);
@@ -194,10 +203,10 @@ public class ProjectsServiceImpl extends ServiceImpl<ProjectsMapper, Projects>
         Long userId = UserHolder.getUserId();
         if (!checkAdmin(projectUserLinkDTO.getProjectId())) {
             // 是否在该表中，且是否是管理员
-            return Result.fail(400, "无权限添加组员");
+            return Result.NO_AUTH;
         } else if (userId.equals(projectUserLinkDTO.getUserId())) {
             // 不能操作自己的权限
-            return Result.fail(400, "不能操作自身权限");
+            return Result.SELF_MANIPULATE;
         }
 
         // 添加关联

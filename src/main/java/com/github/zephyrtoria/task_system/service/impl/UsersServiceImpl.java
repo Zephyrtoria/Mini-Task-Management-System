@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.github.zephyrtoria.task_system.consts.DatabaseConsts.ID;
+import static com.github.zephyrtoria.task_system.consts.DatabaseConsts.NAME;
 import static com.github.zephyrtoria.task_system.consts.RedisConsts.LOGIN_USER_REDIS_PREFIX;
 import static com.github.zephyrtoria.task_system.consts.RedisConsts.LOGIN_USER_REDIS_TTL;
 
@@ -38,11 +40,13 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
     @Override
     @Transactional
     public Result signup(UserSignupDTO userSignupDTO) {
-        Users users = query().eq("name", userSignupDTO.getName()).one();
+        // 查询用户是否存在
+        Users users = query().eq(NAME, userSignupDTO.getName()).one();
         if (users != null) {
-            return Result.fail(400,"当前用户名已被占用");
+            return Result.USER_IS_EXIST;
         }
 
+        // 不存在则插入
         users = new Users();
         BeanUtil.copyProperties(userSignupDTO, users);
         users.setPassword(PasswordEncoder.encode(users.getPassword()));
@@ -52,15 +56,16 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
     @Override
     public Result signin(UserSigninDTO userSigninDTO) {
-        Users users = query().eq("name", userSigninDTO.getName()).one();
+        Users users = query().eq(NAME, userSigninDTO.getName()).one();
         if (users == null) {
-            return Result.fail(400,"用户不存在");
-        }
-        if (!PasswordEncoder.matches(users.getPassword(), userSigninDTO.getPassword())) {
-            return Result.fail(400,"密码错误");
+            // 查询用户是否存在
+            return Result.USER_NOT_EXIST;
+        } else if (!PasswordEncoder.matches(users.getPassword(), userSigninDTO.getPassword())) {
+            // 判断密码
+            return Result.PASSWORD_UNMATCH;
         }
 
-        // 登录成功
+        // 登录成功，存入token到redis
         String token = UUID.randomUUID().toString(true);
         stringRedisTemplate.opsForValue().set(LOGIN_USER_REDIS_PREFIX + token, users.getId().toString(), LOGIN_USER_REDIS_TTL, TimeUnit.MINUTES);
         return Result.ok(token);
@@ -69,9 +74,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
     @Override
     public Result me() {
         Long userId = UserHolder.getUserId();
-        Users users = query().eq("id", userId).one();
+        Users users = query().eq(ID, userId).one();
         if (users == null) {
-            return Result.fail(400,"用户不存在");
+            return Result.USER_NOT_EXIST;
         }
         UserMeVO userMeVO = new UserMeVO();
         BeanUtil.copyProperties(users, userMeVO);
@@ -80,9 +85,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users>
 
     @Override
     public Result queryById(Long id) {
-        Users users = query().eq("id", id).one();
+        Users users = query().eq(ID, id).one();
         if (users == null) {
-            return Result.fail(400,"用户不存在");
+            return Result.USER_NOT_EXIST;
         }
         UserQueryVO userQueryVO = new UserQueryVO();
         BeanUtil.copyProperties(users, userQueryVO);

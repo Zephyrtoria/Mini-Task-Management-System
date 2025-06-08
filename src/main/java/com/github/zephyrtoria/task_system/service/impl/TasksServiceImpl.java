@@ -44,7 +44,7 @@ public class TasksServiceImpl extends ServiceImpl<TasksMapper, Tasks>
     public Result create(TasksCreateDTO tasksCreateDTO) {
         // 检查权限
         if (!checkAdmin(tasksCreateDTO.getProjectId())) {
-            return Result.fail(400, "无权限添加任务");
+            return Result.NO_AUTH;
         }
 
         // 添加任务
@@ -67,19 +67,20 @@ public class TasksServiceImpl extends ServiceImpl<TasksMapper, Tasks>
     public Result delete(TasksDeleteDTO tasksDeleteDTO) {
         // 检查权限
         if (!checkAdmin(tasksDeleteDTO.getProjectId())) {
-            return Result.fail(400, "无权限删除任务");
+            return Result.NO_AUTH;
         }
 
-        // 删除任务
-        QueryWrapper<Tasks> wrapper = new QueryWrapper<>();
-        Long taskId = tasksDeleteDTO.getId();
-        wrapper.eq(ID, taskId);
-        remove(wrapper);
-
         // 删除依赖任务，注意无论自己是prev还是next都要删除
+        Long taskId = tasksDeleteDTO.getId();
         QueryWrapper<TaskDependency> dependencyQueryWrapper = new QueryWrapper<>();
         dependencyQueryWrapper.eq(NEXT_ID, taskId).or().eq(PREV_ID, taskId);
         taskDependencyMapper.delete(dependencyQueryWrapper);
+
+        // 删除任务
+        QueryWrapper<Tasks> wrapper = new QueryWrapper<>();
+        wrapper.eq(ID, taskId);
+        remove(wrapper);
+
 
         return Result.ok();
     }
@@ -89,7 +90,7 @@ public class TasksServiceImpl extends ServiceImpl<TasksMapper, Tasks>
     public Result modify(TasksUpdateDTO tasksUpdateDTO) {
         // 检查权限
         if (!checkAdmin(tasksUpdateDTO.getProjectId())) {
-            return Result.fail(400, "无权限修改任务");
+            return Result.NO_AUTH;
         }
 
         // 更新任务
@@ -122,14 +123,14 @@ public class TasksServiceImpl extends ServiceImpl<TasksMapper, Tasks>
     public Result status(TasksSetStatusDTO tasksSetStatusDTO) {
         // 检查权限
         if (!checkAdmin(tasksSetStatusDTO.getProjectId())) {
-            return Result.fail(400, "无权限更改任务状态");
+            return Result.NO_AUTH;
         }
 
         // 查询任务
         Long tasksId = tasksSetStatusDTO.getId();
         Tasks tasks = query().eq(ID, tasksId).one();
         if (tasks == null) {
-            return Result.fail(400, "任务不存在");
+            return Result.NO_AUTH;
         }
 
         // 查询前置任务是否完成
@@ -141,7 +142,7 @@ public class TasksServiceImpl extends ServiceImpl<TasksMapper, Tasks>
             Tasks prevTasks = query().eq(ID, dependency.getPrevId()).one();
             if (!prevTasks.getStatus().equals(TasksConsts.DONE)) {
                 // 未完成则拒绝修改
-                return Result.fail(400, "前置任务未完成");
+                return Result.PREV_TASK_UNDO;
             }
         }
 
